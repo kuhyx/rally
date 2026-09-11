@@ -1,0 +1,53 @@
+name: ci
+
+# Lint (warnings-as-errors parse), GUT unit + integration tests, web export
+# and the headless-Chromium smoke test. perf.sh needs a display and stays
+# local. The shared gates have their own workflows.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  GODOT_VERSION: "4.7.2"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.x" }
+
+      - name: Install Godot
+        run: |
+          curl -fsSL -o godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q godot.zip
+          sudo mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" /usr/local/bin/godot
+
+      - name: Check out the shared gates
+        uses: actions/checkout@v4
+        with:
+          repository: kuhyx/utils
+          path: .utils
+
+      # install.sh: export templates, the .venv (gdtoolkit, playwright,
+      # pre-commit), Chromium, GUT, and the git hooks.
+      - name: Install project tooling
+        run: UTILS_ROOT="$PWD/.utils" ./install.sh
+
+      - name: Lint and test
+        run: |
+          scripts/lint.sh
+          scripts/test.sh
+
+      - name: Export web and smoke-test it
+        run: |
+          scripts/export_web.sh
+          .venv/bin/python tests/web_smoke.py
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web
+          path: dist/
