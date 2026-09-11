@@ -16,6 +16,7 @@ const TARMAC_SHARE: float = 0.4
 const FINISH_MARGIN: float = 10.0
 const START_OFFSET: float = 8.0
 const BAKE_INTERVAL: float = 1.0
+const SHOULDER: float = 0.5
 
 var curve: Curve3D = Curve3D.new()
 var _surfaces: Array[Surface.Kind] = []
@@ -66,8 +67,19 @@ func progress_at(position: Vector3) -> float:
 	return curve.get_closest_offset(position)
 
 
+## Off the ribbon (beyond half the width plus a small shoulder) is grass,
+## whatever the road there is laid with.
 func surface_at(position: Vector3) -> Surface.Kind:
-	return surface_at_offset(progress_at(position))
+	var offset: float = progress_at(position)
+	var tangent: Vector3 = tangent_at(offset)
+	var lateral: Vector3 = position - point_at(offset)
+	# Drop the along-road component so the straight aprons past either end
+	# (where progress clamps) still read as road, not grass.
+	lateral -= tangent * lateral.dot(tangent)
+	lateral.y = 0.0
+	if lateral.length() > WIDTH * 0.5 + SHOULDER:
+		return Surface.Kind.GRASS
+	return surface_at_offset(offset)
 
 
 func surface_at_offset(offset: float) -> Surface.Kind:

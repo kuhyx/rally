@@ -6,6 +6,8 @@ extends GutTest
 
 const SEEDS: Array[int] = [42, 7]
 const MAX_STAGE_SECONDS: float = 150.0
+const WALL_TIMEOUT_MS: int = 60_000
+const POLL_MS: int = 200
 
 
 func test_same_seed_is_deterministic() -> void:
@@ -20,8 +22,10 @@ func test_other_seed_finishes() -> void:
 	assert_between(elapsed, 30.0, MAX_STAGE_SECONDS)
 
 
+## Runs the game as a child process with a wall-clock cap: a build that
+## cannot compile never prints FINISH, and OS.execute would wait forever.
 func _finish_time(seed_value: int) -> float:
-	var output: Array = []
+	var stdout_path: String = "user://autodrive_%d.log" % seed_value
 	var args: PackedStringArray = PackedStringArray(
 		[
 			"--headless",
@@ -35,9 +39,24 @@ func _finish_time(seed_value: int) -> float:
 			"--quit-on-finish",
 		]
 	)
-	var code: int = OS.execute(OS.get_executable_path(), args, output, true)
-	assert_eq(code, 0, "game process exit code")
-	for line: String in "".join(output).split("\n"):
+	var shell: String = (
+		"%s %s > %s 2>&1"
+		% [OS.get_executable_path(), " ".join(args), ProjectSettings.globalize_path(stdout_path)]
+	)
+	var pid: int = OS.create_process("/bin/sh", PackedStringArray(["-c", shell]))
+	assert_gt(pid, 0, "game process must start")
+	var waited: int = 0
+	while OS.is_process_running(pid) and waited < WALL_TIMEOUT_MS:
+		OS.delay_msec(POLL_MS)
+		waited += POLL_MS
+	if OS.is_process_running(pid):
+		var killed: Error = OS.kill(pid)
+		fail_test(
+			"game did not finish within %d ms (kill: %s)" % [WALL_TIMEOUT_MS, error_string(killed)]
+		)
+		return 0.0
+	assert_eq(OS.get_process_exit_code(pid), 0, "game process exit code")
+	for line: String in FileAccess.get_file_as_string(stdout_path).split("\n"):
 		if line.begins_with("FINISH "):
 			return line.trim_prefix("FINISH ").to_float()
 	return 0.0

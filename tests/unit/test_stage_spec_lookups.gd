@@ -1,42 +1,5 @@
 extends GutTest
-
-
-func test_same_seed_identical_stage() -> void:
-	var a: StageSpec = StageSpec.new(42)
-	var b: StageSpec = StageSpec.new(42)
-	assert_eq(a.control_points(), b.control_points())
-	assert_eq(a.length(), b.length())
-
-
-func test_different_seed_different_stage() -> void:
-	var a: StageSpec = StageSpec.new(1)
-	var b: StageSpec = StageSpec.new(2)
-	assert_ne(a.control_points(), b.control_points())
-
-
-func test_length_is_about_stage_length() -> void:
-	var spec: StageSpec = StageSpec.new(7)
-	assert_between(spec.length(), StageSpec.STAGE_LENGTH * 0.95, StageSpec.STAGE_LENGTH * 1.15)
-
-
-func test_z_is_monotonic_so_road_never_crosses() -> void:
-	for seed_value: int in range(1, 6):
-		var points: Array[Vector3] = StageSpec.new(seed_value).control_points()
-		for i: int in range(1, points.size()):
-			assert_gt(points[i].z, points[i - 1].z, "seed %d point %d" % [seed_value, i])
-
-
-func test_elevation_stays_bounded() -> void:
-	for point: Vector3 in StageSpec.new(3).control_points():
-		assert_between(point.y, -StageSpec.CLIMB_LIMIT, StageSpec.CLIMB_LIMIT)
-
-
-func test_surface_starts_tarmac_ends_gravel() -> void:
-	var spec: StageSpec = StageSpec.new(5)
-	assert_eq(spec.surface_at_offset(0.0), Surface.Kind.TARMAC)
-	assert_eq(spec.surface_at_offset(spec.length()), Surface.Kind.GRAVEL)
-	assert_eq(spec.surface_at_offset(-50.0), Surface.Kind.TARMAC)
-	assert_eq(spec.surface_at_offset(spec.length() * 5.0), Surface.Kind.GRAVEL)
+## Lookups along the finished stage: offsets, surfaces, finish, spawn.
 
 
 func test_surface_at_position_matches_offset() -> void:
@@ -44,6 +7,25 @@ func test_surface_at_position_matches_offset() -> void:
 	var near_end: Vector3 = spec.point_at(spec.length() - 30.0)
 	assert_eq(spec.surface_at(near_end), Surface.Kind.GRAVEL)
 	assert_eq(spec.surface_at(spec.point_at(5.0)), Surface.Kind.TARMAC)
+
+
+func test_off_road_is_grass() -> void:
+	var spec: StageSpec = StageSpec.new(5)
+	var at: float = 300.0
+	var right: Vector3 = spec.tangent_at(at).cross(Vector3.UP).normalized()
+	var edge: float = StageSpec.WIDTH * 0.5
+	assert_eq(spec.surface_at(spec.point_at(at) + right * (edge - 0.5)), Surface.Kind.TARMAC)
+	assert_eq(spec.surface_at(spec.point_at(at) + right * (edge + 1.0)), Surface.Kind.GRASS)
+	assert_eq(spec.surface_at(spec.point_at(at) - right * (edge + 1.0)), Surface.Kind.GRASS)
+
+
+func test_run_off_past_the_ends_is_still_road() -> void:
+	var spec: StageSpec = StageSpec.new(5)
+	var end: float = spec.length()
+	var beyond: Vector3 = spec.point_at(end) + spec.tangent_at(end) * 40.0
+	assert_eq(spec.surface_at(beyond), Surface.Kind.GRAVEL)
+	var before: Vector3 = spec.point_at(0.0) - spec.tangent_at(0.0) * 40.0
+	assert_eq(spec.surface_at(before), Surface.Kind.TARMAC)
 
 
 func test_progress_at_point_on_curve() -> void:

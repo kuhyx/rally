@@ -5,6 +5,7 @@ extends Node3D
 ## only) and the start/finish gates. Everything is primitives; no assets.
 
 const SAMPLE_STEP: float = 2.0
+const APRON: float = 120.0
 const GRASS_WIDTH: float = 160.0
 const GRASS_DROP: float = 0.04
 const TREE_SPACING: float = 18.0
@@ -28,13 +29,18 @@ func build(spec: StageSpec, seed_value: int) -> void:
 func _ribbon(spec: StageSpec, width: float, lift: float, tint: Callable) -> StaticBody3D:
 	var surface_tool: SurfaceTool = SurfaceTool.new()
 	surface_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	# APRON metres of straight run-off before the start and past the finish,
+	# extrapolated along the end tangents, so braking after the flag never
+	# drops the car off the edge of the world.
 	var total: float = spec.length()
-	var rows: int = ceili(total / SAMPLE_STEP) + 1
+	var rows: int = ceili((total + 2.0 * APRON) / SAMPLE_STEP) + 1
 	for row: int in range(rows):
-		var at: float = minf(row * SAMPLE_STEP, total)
-		var centre: Vector3 = spec.point_at(at) + Vector3.UP * lift
-		var right: Vector3 = spec.tangent_at(at).cross(Vector3.UP).normalized() * width * 0.5
-		var colour: Color = tint.call(at)
+		var at: float = minf(row * SAMPLE_STEP - APRON, total + APRON)
+		var clamped: float = clampf(at, 0.0, total)
+		var tangent: Vector3 = spec.tangent_at(clamped)
+		var centre: Vector3 = spec.point_at(clamped) + tangent * (at - clamped) + Vector3.UP * lift
+		var right: Vector3 = tangent.cross(Vector3.UP).normalized() * width * 0.5
+		var colour: Color = tint.call(clamped)
 		for side: float in [-1.0, 1.0]:
 			surface_tool.set_color(colour)
 			surface_tool.set_normal(Vector3.UP)

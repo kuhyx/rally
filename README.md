@@ -25,7 +25,7 @@ prints `FINISH <seconds>` and exits (what the tests and the perf gate use).
 | `scripts/lint.sh` | gdlint (every check), gdformat, headless parse with **all GDScript warnings as errors** |
 | `scripts/test.sh` | GUT: unit tests for every pure script + an integration run of the real game (`--fixed-fps`, 78 sim-seconds in ~2 s) that asserts determinism |
 | `scripts/check.sh` | lint + test + the four shared gates (250-line cap, markdown naming, no binaries, dependency freshness) |
-| `scripts/perf.sh` | on-screen 1080p autodrive run, V-Sync off; fails if min FPS < 60 |
+| `scripts/perf.sh` | on-screen 1080p autodrive run, V-Sync off; fails if min FPS < 60. Opens a window on the real display: run it yourself, not from an agent |
 | `scripts/export_web.sh && .venv/bin/python tests/web_smoke.py` | exports `dist/`, boots it in headless Chromium, holds W and asserts the car moved and the canvas is not blank |
 
 Pre-commit runs the shared gates; CI (`.github/workflows/`) runs everything

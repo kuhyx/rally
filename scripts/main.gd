@@ -61,9 +61,18 @@ func _physics_process(delta: float) -> void:
 
 
 func _read_control() -> CarInput:
+	if timer.is_finished():
+		return _parked()
 	if options.autodrive:
 		return _autodrive.control(car.global_position, car.forward(), car.linear_velocity.length())
 	return CarInput.from_actions(Input.get_action_strength)
+
+
+## After the flag the car coasts to a stop; only restart/quit are live.
+func _parked() -> CarInput:
+	var input: CarInput = CarInput.new()
+	input.brake = 1.0
+	return input
 
 
 func _on_finished() -> void:

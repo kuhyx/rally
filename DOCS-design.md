@@ -42,7 +42,9 @@ the black-box autodrive run and the web smoke test. GUT is installed by
 
 ## Known limits
 
-- Trees are visual only (no collision).
+- Trees are visual only (no collision); the chase camera can pass through a crown.
+- Both ribbons carry a 120 m straight run-off past each end so the car can
+  brake after the flag; off the ribbon the surface reads as grass.
 - The grass ribbon is 160 m wide; beyond it the car falls and is reset to the
   start when it drops below y = -60.
 - `scripts/perf.sh` needs a display, so CI does not run it; the recorded
