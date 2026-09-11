@@ -29,9 +29,12 @@ ensure_godot() {
         tpz="$(mktemp --suffix=.tpz)"
         curl -fsSL -o "$tpz" \
             "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+        local unpacked
+        unpacked="$(mktemp -d)"
+        unzip -q "$tpz" -d "$unpacked"    # a .tpz is a zip with a templates/ root
         mkdir -p "$TEMPLATES_DIR"
-        bsdtar -xf "$tpz" -C "$TEMPLATES_DIR" --strip-components=1
-        rm -f "$tpz"
+        mv "$unpacked"/templates/* "$TEMPLATES_DIR"/
+        rm -rf "$tpz" "$unpacked"
     fi
 }
 
@@ -43,7 +46,13 @@ ensure_python_tools() {
         python3 -m venv "$VENV"
     fi
     "$VENV/bin/python" -m pip install --quiet -r "$REPO_ROOT/requirements-dev.txt"
-    "$VENV/bin/python" -m playwright install chromium >/dev/null
+    # Debian/Ubuntu runners lack Chromium's shared libraries; --with-deps
+    # apt-installs them there and is not supported (nor needed) on Arch.
+    if command -v apt-get >/dev/null 2>&1; then
+        "$VENV/bin/python" -m playwright install --with-deps chromium >/dev/null
+    else
+        "$VENV/bin/python" -m playwright install chromium >/dev/null
+    fi
 }
 
 ensure_gut() {
