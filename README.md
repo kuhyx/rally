@@ -35,7 +35,7 @@ except `perf.sh`, which needs a display.
 
 ```
 scripts/*.gd      game code (see CLAUDE.md for the map)
-scripts/*.sh      the gates above + shims over ~/utils
+scripts/*.sh      the gates above + shims over ~/src/utils
 tests/unit/       one GUT file per pure script
 tests/integration/ black-box autodrive runs
 tests/web_smoke.py Playwright check of the web export

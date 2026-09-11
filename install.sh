@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ============================================================================
-# Install everything ~/rally depends on: Godot 4.7 + export templates, the
+# Install everything ~/src/rally depends on: Godot 4.7 + export templates, the
 # Python dev tools (gdlint/gdformat, pre-commit, Playwright + Chromium for the
 # web smoke test), the GUT test framework, and this repo's git hooks.
 #
