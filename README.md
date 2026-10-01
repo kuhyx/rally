@@ -15,6 +15,10 @@ export. No art assets: every mesh is a primitive, every colour is in
 ./run.sh --seed=7   # a different stage
 ```
 
+Play it in the browser: https://kuhyx.itch.io/rally. Publish a new build
+there with `tools/publish_itch.sh` (refuses a dirty tree; `--dry-run` to
+stop before the push).
+
 `--autodrive` lets the built-in driver take the wheel; `--quit-on-finish`
 prints `FINISH <seconds>` and exits (what the tests and the perf gate use).
 
@@ -39,5 +43,6 @@ scripts/*.sh      the gates above + shims over ~/src/utils
 tests/unit/       one GUT file per pure script
 tests/integration/ black-box autodrive runs
 tests/web_smoke.py Playwright check of the web export
+tools/publish_itch.sh export + smoke test + butler push to itch.io
 addons/gut/       installed by install.sh, gitignored (ships PNGs)
 ```
