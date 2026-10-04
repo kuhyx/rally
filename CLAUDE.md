@@ -51,3 +51,12 @@ Nodes (thin):
 - `--fixed-fps 60` runs headless faster than realtime *and* stays bit-identical
   to the realtime run (77.65 s on seed 42 both ways).
 - Autodrive runs never write best times (they are not the player).
+
+## Commands
+
+- run: `godot --path .`
+- test: `scripts/test.sh`
+- test-changed: `scripts/test_changed.sh`
+- lint: `scripts/lint.sh`
+- coverage: n/a: GUT has no coverage tool; every pure script has a unit test
+- coverage-gaps: n/a: no coverage report is produced
